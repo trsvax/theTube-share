@@ -80,3 +80,4 @@ Mount S3 as a folder. Drag photos to `/shares/`. No Lambda in the publish path f
 2. Connect MCP server, verify logs
 3. iOS Shortcut (build on Mac, syncs to phone)
 4. `[share]:` block renderer in the site
+5. Virtual WebDAV — mount the content as a filesystem, organized by post type. Read-only from local repos first. When you need remote data (logs, S3, pending captures), build the edge functions to serve it. The filesystem drives the MCP design — the questions you ask while browsing are the tools the AI needs.
