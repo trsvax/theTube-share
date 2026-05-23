@@ -42,15 +42,15 @@ The script generates a random secret, embeds it in the JWT payload, signs the JW
 }
 ```
 
-The JWT is **signed but not encrypted** (for now). Claims are base64-encoded, readable if intercepted. Future upgrade: JWE encryption so only Lambda can read the claims.
+The JWT is **encrypted (JWE)** — claims are only readable by Lambda. The token is an opaque blob to anyone who intercepts it. See the JWE encryption section below for details.
 
 ## Verification (what Lambda does)
 
-1. Receive `Authorization: Bearer <token>`, `X-Pass`, `X-Timestamp`
-2. Base64-decode the JWT payload → extract `secret`, `scope`, `exp`
-3. Check `exp > now` (not expired)
-4. Check `scope` allows this operation (capture vs publish)
-5. Verify JWT HMAC: `HMAC-SHA256(header.payload, secret) === signature` (not tampered)
+1. Receive `Authorization: Bearer <encrypted-token>`, `X-Pass`, `X-Timestamp`
+2. Decrypt JWE with Lambda's private key → get claims
+3. Extract `secret`, `scope`, `exp`
+4. Check `exp > now` (not expired)
+5. Check `scope` allows this operation (capture vs publish)
 6. Compute `SHA256(secret + X-Timestamp)`, compare to `X-Pass` (client has the secret)
 7. Check `X-Timestamp` within ±30 seconds of now (not a replay)
 
@@ -122,13 +122,45 @@ Both paths converge at the same Lambda. Check `iss` to decide which verification
 
 No server-side state is lost. The tokens are the auth system. Mint new ones anytime.
 
-## Future: JWE encryption
+## JWE encryption
 
-Currently the JWT claims (including the secret) are base64-encoded, not encrypted. If intercepted, they're readable. To fix:
+The JWT must be encrypted (JWE), not just signed. The secret is in the claims — if the token is readable, the secret is exposed and the time-hash can be forged. JWE ensures only Lambda can read the claims.
 
-- Lambda gets a key pair (private in Secrets Manager)
-- Mint script encrypts the JWT with Lambda's public key (JWE)
-- Only Lambda can decrypt and read the claims
-- Protects: secret, device name, scope — all hidden in transit and logs
+**How it works:**
 
-Tradeoff: Lambda needs a private key (Secrets Manager cold-start cost). Worth it when the claims contain sensitive data (location, names). Not needed for filenames and dates.
+- Lambda has a key pair (private key in Secrets Manager, encrypted backup in `infra/secrets/`)
+- Lambda's public key lives in the share repo (`keys/share-encrypt-public.pem`)
+- `mint-token.sh` encrypts the JWT with Lambda's public key
+- The token is opaque — base64 blob, claims unreadable without the private key
+- Lambda decrypts at request time, extracts the secret, verifies the time-hash
+
+**What's protected:**
+
+- The embedded secret (can't forge hashes without it)
+- Device name, scope, role (can't see what the token allows)
+- Expiry (can't tell when it dies)
+
+**Key loss:**
+
+- Lose Lambda's private key → can't decrypt any existing tokens. But: the capture index (in CF logs, in the URL) survives. Only the private metadata is lost. Re-mint all tokens, redeploy with new key pair.
+
+**Where the keys live:**
+
+```
+theTube-share/keys/share-encrypt-public.pem   ← Mac uses this to encrypt
+thetube-private/infra/secrets/share-decrypt.enc ← Lambda's private key (encrypted with vault key)
+Secrets Manager: thetube/share-decrypt-key     ← Lambda reads at cold start
+```
+
+**Verification with JWE:**
+
+1. Receive `Authorization: Bearer <encrypted-token>`, `X-Pass`, `X-Timestamp`
+2. Decrypt JWE with Lambda's private key → get claims
+3. Extract `secret`, `scope`, `exp`, `sub`
+4. Check `exp > now`
+5. Check `scope` allows this operation
+6. Compute `SHA256(secret + X-Timestamp)`, compare to `X-Pass`
+7. Check `X-Timestamp` within ±30s
+8. All pass → process request
+
+Same verification chain as before. The only difference: step 2 is decrypt instead of base64-decode.
