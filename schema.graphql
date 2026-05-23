@@ -1,0 +1,106 @@
+"""
+theTube Share System — capture intent from any app, publish assets later.
+
+Two trust tiers:
+- Field capture: data in query string, logged by CloudFront, 202. No compute.
+- Publish: binary upload to Lambda, signature-verified, stored to S3.
+
+The ? is the routing signal. Present = batch (log only). Absent = compute (Lambda).
+"""
+
+type Mutation {
+  """
+  Log a capture intent. No upload, no compute. The query string IS the data.
+  CloudFront logs it and returns 202. The photo stays on the device.
+
+  POST /w/share/add?type=image&file=IMG_1234.HEIC&date=2026-05-23&caption=temple+gate
+  """
+  addCapture(
+    "Media type: image, link, note"
+    type: ShareType!
+    "Original filename or URL"
+    file: String!
+    "Capture date (ISO 8601)"
+    date: String!
+    "What you thought at capture time"
+    caption: String
+  ): Accepted @moderate @auth(role: USER)
+
+  """
+  Upload a finished asset. Binary body, signature-verified.
+  Lambda stores to S3, returns the path. The [share]: block gets its src:.
+
+  POST /w/share/upload
+  Headers: Content-Type, X-Share-Meta, X-Signature
+  Body: binary file
+  """
+  publish(
+    "Media type"
+    type: ShareType!
+    "Original filename"
+    file: String!
+    "Capture date this asset belongs to"
+    date: String!
+  ): PublishResult @realtime @auth(role: OWNER)
+}
+
+type Query {
+  """
+  List captures that haven't been published yet.
+  Read from processed log entries at /shares/pending/index.json.
+  """
+  pendingCaptures: [Capture!]!
+}
+
+# --- Types ---
+
+enum ShareType {
+  IMAGE
+  LINK
+  NOTE
+}
+
+"202 Accepted — data is in the log, processing is deferred."
+type Accepted {
+  ok: Boolean!
+}
+
+type PublishResult {
+  "S3 path to the stored asset, e.g. /shares/2026-05-23-abc123.jpg"
+  src: String!
+}
+
+type Capture {
+  type: ShareType!
+  file: String!
+  date: String!
+  caption: String
+  "Timestamp from CloudFront log"
+  logged: String!
+}
+
+# --- Directives ---
+
+"""
+Batch processing. Client includes ? (data in query string).
+No immediate result — processing happens later from logs.
+"""
+directive @moderate on FIELD_DEFINITION
+
+"""
+Immediate processing. Client omits ? (data in body).
+Returns a result synchronously.
+"""
+directive @realtime on FIELD_DEFINITION
+
+"""
+JWT required with specified role.
+USER = any authenticated user (field capture).
+OWNER = signature-verified owner (publish).
+"""
+directive @auth(role: AuthRole!) on FIELD_DEFINITION
+
+enum AuthRole {
+  USER
+  OWNER
+}
