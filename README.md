@@ -120,3 +120,4 @@ bash scripts/verify-local.sh
 - `trsvax/thetube-comments` — same pattern (schema-only plugin repo)
 - [crypto.md](./crypto.md) — auth design details
 - [scripts/shortcut-design.md](./scripts/shortcut-design.md) — iOS Shortcut action-by-action
+- [notes.md](./notes.md) — session notes and design decisions
