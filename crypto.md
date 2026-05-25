@@ -86,7 +86,7 @@ All pass → process the request.
 | Client | Trust | Why |
 |--------|-------|-----|
 | Mac | High | Keychain + Touch ID, secret never on disk |
-| Phone (Shortcut) | Medium | Secret in Shortcut, phone lock screen protects |
+| Phone (Shortcut) | Medium | Secret in Shortcut text field, iCloud-synced — known risk. Fix is a native app with Secure Enclave. Not worth the work for personal capture. |
 | Browser | Medium | Uses Cognito, future `hashme` service computes hash |
 | Kid's device | Medium | Short expiry, capture-only scope, you control minting |
 
