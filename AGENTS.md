@@ -41,7 +41,7 @@ AGENTS.md         This file
 Driven by how AWS logging works: CloudFront logs the URL (path + query string), not the body.
 
 - Query string present (`?`) = data in the URL. CloudFront logs it automatically. 202, fire and forget. Use when data is safe to log and there's no body to save.
-- No query string = body. Lambda saves it to S3 (`s3.putObject` — that's the only compute). Use when data shouldn't be in the logs (PII, sensitive content), or when you have a file to store.
+- No query string = body. Lambda saves it to S3 (`s3.putObject`) and can verify the JWT signature (CF Functions can check header presence but not the signature). Use when data shouldn't be in the logs (PII, sensitive content), when you have a file to store, or when auth verification is required.
 
 This convention applies across all `/tube/` endpoints on the platform.
 
