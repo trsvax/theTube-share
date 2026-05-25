@@ -2,15 +2,16 @@
 theTube Share System — capture intent from any app, publish assets later.
 
 Two trust tiers:
-- Field capture: data in query string, logged by CloudFront, 202. No compute.
+- Field capture: data in query string, logged by CloudFront, 202. No Lambda.
 - Publish: binary upload to Lambda, signature-verified, stored to S3.
 
-The ? is the routing signal. Present = batch (log only). Absent = compute (Lambda).
+The ? decides where data lands. Present = data in URL, CF logs it. Absent = body, Lambda saves it.
+JWT present → Lambda runs (verify, then act). No JWT → 404.
 """
 
 type Mutation {
   """
-  Log a capture intent. No upload, no compute. The query string IS the data.
+  Log a capture intent. No upload, no Lambda. The query string IS the data.
   CloudFront logs it and returns 202. The photo stays on the device.
 
   POST /tube/share/add?type=image&file=IMG_1234.HEIC&date=2026-05-23&caption=temple+gate

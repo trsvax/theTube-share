@@ -28,7 +28,7 @@ Every step uses a native Apple tool. The AI is the connective tissue — it read
 
 The default workflow is capture-first:
 
-**Capture** — out in the world, hit share, tap "Save to Tube." The Shortcut POSTs metadata to `/tube/share/add?type=image&file=...`. CloudFront logs it, returns 202. No upload, no compute. The photo stays in iCloud.
+**Capture** — out in the world, hit share, tap "Save to Tube." The Shortcut POSTs metadata to `/tube/share/add?type=image&file=...`. CloudFront logs it, returns 202. No upload, no Lambda. The photo stays in iCloud.
 
 **Query** — back at the Mac, ask the AI "what did I capture today?" It reads the CloudFront logs, shows you the list. You pick the ones that matter.
 
@@ -68,10 +68,12 @@ Lambda:  decode JWT → get secret → SHA256(secret + timestamp) → compare
 
 ## Transport
 
-The `?` in the URL is the routing signal:
+The `?` in the URL decides where data lands:
 
-- `POST /tube/share/add?type=image&file=...` → logged, 202, no compute
-- `POST /tube/share/upload` (no `?`) → Lambda, verified, compute
+- `POST /tube/share/add?type=image&file=...` → data in URL, CF logs it; Lambda verifies JWT and records capture
+- `POST /tube/share/upload` (no `?`) → data in body; Lambda verifies JWT and saves to S3
+
+JWT present → Lambda runs. No JWT → 404.
 
 Same convention as all `/tube/` endpoints. Comments, reactions, bookmarks — all use the same pattern.
 

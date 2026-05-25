@@ -40,10 +40,12 @@ AGENTS.md         This file
 
 Driven by how AWS logging works: CloudFront logs the URL (path + query string), not the body.
 
-- Query string present (`?`) = data in the URL. CloudFront logs it automatically. 202, fire and forget. Use when data is safe to log and there's no body to save.
-- No query string = body. Lambda saves it to S3 (`s3.putObject`) and can verify the JWT signature (CF Functions can check header presence but not the signature). Use when data shouldn't be in the logs (PII, sensitive content), when you have a file to store, or when auth verification is required.
+Trust model: JWT present → Lambda spins up to verify it and decide what to do. No JWT → endpoint doesn't exist (404). The `?` is data format only, not a routing signal.
 
-The `?` decides where data lands, not whether compute happens. Compute is gated by the JWT. This convention applies across all `/tube/` endpoints on the platform.
+- Query string present (`?`) = data in the URL. CloudFront logs it automatically. Lambda verifies JWT, reads data from the logged URL, acts.
+- No query string = data in the body. Lambda verifies JWT, reads body, saves to S3.
+
+This convention applies across all `/tube/` endpoints on the platform.
 
 ## No code here
 
