@@ -110,7 +110,7 @@ No server-side revocation. Tokens are valid until `exp`. The model is:
 - **Mac** — your device, your Keychain. No revocation needed.
 - **Kids** — short expiry (30 days), capture-only scope. Revoke = don't re-mint when it expires. If a token leaks before expiry, wait it out — 30 days, capture-only, personal site. Acceptable.
 
-There are no public users with minted tokens. Cognito handles web users with its own revocation flow.
+There are no public users with minted tokens. A real multi-user system uses Cognito — group membership, token revocation, refresh flows, all built in. Minted JWTs are personal tooling, not a user auth system.
 
 ## Multi-user (future)
 
