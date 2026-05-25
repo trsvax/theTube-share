@@ -14,15 +14,15 @@ Every step uses a native Apple tool. The AI is the connective tissue — it read
 
 ## The pieces
 
-| Component | Lines | What it does |
-|-----------|-------|-------------|
-| CF function | ~10 | `/tube/*?*` → log and 202 |
-| Edge-auth update | ~30 | Verify minted JWTs alongside Cognito |
-| `mint-token.sh` | ~60 | Mint tokens for any device (Mac, phone, kids) |
-| `share-request.sh` | ~70 | Capture/publish from Mac |
-| iOS Shortcut | ~10 actions | Capture from phone share sheet |
-| `[share]:` block renderer | ~40 | Render captures in posts |
-| Lambda (publish) | ~50 | Verify + store to S3 |
+| Component                 | Lines       | What it does                                  |
+| ------------------------- | ----------- | --------------------------------------------- |
+| CF function               | ~10         | `/tube/*?*` → log and 202                     |
+| Edge-auth update          | ~30         | Verify minted JWTs alongside Cognito          |
+| `mint-token.sh`           | ~60         | Mint tokens for any device (Mac, phone, kids) |
+| `share-request.sh`        | ~70         | Capture/publish from Mac                      |
+| iOS Shortcut              | ~10 actions | Capture from phone share sheet                |
+| `[share]:` block renderer | ~40         | Render captures in posts                      |
+| Lambda (publish)          | ~50         | Verify + store to S3                          |
 
 ## The flow
 
@@ -59,12 +59,12 @@ Device:  SHA256(secret + timestamp) → X-Pass header
 Lambda:  decode JWT → get secret → SHA256(secret + timestamp) → compare
 ```
 
-| Client | Secret stored in | Scope |
-|--------|-----------------|-------|
-| Mac | Keychain + Touch ID | publish |
-| Phone | Shortcut text field | capture |
-| Kids | Shortcut, short expiry | capture |
-| Web (future) | Cognito + hashme | capture/publish by group |
+| Client       | Secret stored in       | Scope                    |
+| ------------ | ---------------------- | ------------------------ |
+| Mac          | Keychain + Touch ID    | publish                  |
+| Phone        | Shortcut text field    | capture                  |
+| Kids         | Shortcut, short expiry | capture                  |
+| Web (future) | Cognito + hashme       | capture/publish by group |
 
 ## Transport
 
@@ -72,6 +72,7 @@ The `?` in the URL decides where data lands:
 
 - `POST /tube/share/add?type=image&file=...` → data in URL, CF logs it; Lambda verifies JWT and records capture
 - `POST /tube/share/upload` (no `?`) → data in body; Lambda verifies JWT and saves to S3
+- Both at once — metadata in `?`, file in body
 
 JWT present → Lambda runs. No JWT → 404.
 

@@ -58,13 +58,13 @@ All pass → process the request.
 
 ## What each check proves
 
-| Check | Proves |
-|-------|--------|
-| exp | Token hasn't expired |
-| scope | Token is authorized for this operation |
-| HMAC | Token hasn't been modified since minting |
-| X-Pass hash | Client has the secret right now |
-| ±30s window | Request is fresh, not replayed |
+| Check       | Proves                                   |
+| ----------- | ---------------------------------------- |
+| exp         | Token hasn't expired                     |
+| scope       | Token is authorized for this operation   |
+| HMAC        | Token hasn't been modified since minting |
+| X-Pass hash | Client has the secret right now          |
+| ±30s window | Request is fresh, not replayed           |
 
 ## What an attacker needs
 
@@ -75,29 +75,29 @@ All pass → process the request.
 
 ## Where things live
 
-| Thing | Mac | Phone | Lambda |
-|-------|-----|-------|--------|
-| JWT token | Keychain (`share-token-mac`) | Shortcut text field | Receives in header |
-| Secret | Keychain (`share-secret-mac`) | Shortcut text field | Extracts from JWT |
-| Hash computation | `openssl dgst` | Shortcuts "Generate Hash" | `SHA256()` to verify |
+| Thing            | Mac                           | Phone                     | Lambda               |
+| ---------------- | ----------------------------- | ------------------------- | -------------------- |
+| JWT token        | Keychain (`share-token-mac`)  | Shortcut text field       | Receives in header   |
+| Secret           | Keychain (`share-secret-mac`) | Shortcut text field       | Extracts from JWT    |
+| Hash computation | `openssl dgst`                | Shortcuts "Generate Hash" | `SHA256()` to verify |
 
 ## Trust levels
 
-| Client | Trust | Why |
-|--------|-------|-----|
-| Mac | High | Keychain + Touch ID, secret never on disk |
+| Client           | Trust  | Why                                                                                                                                          |
+| ---------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mac              | High   | Keychain + Touch ID, secret never on disk                                                                                                    |
 | Phone (Shortcut) | Medium | Secret in Shortcut text field, iCloud-synced — known risk. Fix is a native app with Secure Enclave. Not worth the work for personal capture. |
-| Browser | Medium | Uses Cognito, future `hashme` service computes hash |
-| Kid's device | Medium | Short expiry, capture-only scope, you control minting |
+| Browser          | Medium | Uses Cognito, future `hashme` service computes hash                                                                                          |
+| Kid's device     | Medium | Short expiry, capture-only scope, you control minting                                                                                        |
 
 All use the same verification path in Lambda. The difference is where the secret is stored and how long the token lives.
 
 ## Scope controls
 
-| Scope | Allowed operations |
-|-------|-------------------|
+| Scope     | Allowed operations                      |
+| --------- | --------------------------------------- |
 | `capture` | addCapture only (log intent, no upload) |
-| `publish` | addCapture + publish (upload files) |
+| `publish` | addCapture + publish (upload files)     |
 
 ## Device identification
 
@@ -114,20 +114,20 @@ There are no public users with minted tokens. A real multi-user system uses Cogn
 
 ## Multi-user (future)
 
-| User type | Auth |
-|-----------|------|
-| You (devices) | Minted JWT + secret (this system) |
-| Other users (web) | Cognito JWT + groups |
+| User type         | Auth                              |
+| ----------------- | --------------------------------- |
+| You (devices)     | Minted JWT + secret (this system) |
+| Other users (web) | Cognito JWT + groups              |
 
 Both paths converge at the same Lambda. Check `iss` to decide which verification to use.
 
 ## Key loss scenarios
 
-| Lost | Impact | Recovery |
-|------|--------|----------|
-| Mac secret (Keychain wiped) | Can't publish from Mac | Re-mint a new token |
-| Phone token | Can't capture from phone | Re-mint, paste into Shortcut |
-| All tokens | No devices can auth | Re-mint everything on Mac |
+| Lost                        | Impact                   | Recovery                     |
+| --------------------------- | ------------------------ | ---------------------------- |
+| Mac secret (Keychain wiped) | Can't publish from Mac   | Re-mint a new token          |
+| Phone token                 | Can't capture from phone | Re-mint, paste into Shortcut |
+| All tokens                  | No devices can auth      | Re-mint everything on Mac    |
 
 No server-side state is lost. The tokens are the auth system. Mint new ones anytime.
 

@@ -5,10 +5,9 @@ Two trust tiers:
 - Field capture: data in query string, logged by CloudFront, 202. No Lambda.
 - Publish: binary upload to Lambda, signature-verified, stored to S3.
 
-The ? decides where data lands. Present = data in URL, CF logs it. Absent = body, Lambda saves it.
+The ? means data is also in the URL, so CF logs it. Body is independent — both can coexist.
 JWT present → Lambda runs (verify, then act). No JWT → 404.
 """
-
 type Mutation {
   """
   Log a capture intent. No upload, no Lambda. The query string IS the data.

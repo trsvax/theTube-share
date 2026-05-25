@@ -31,10 +31,10 @@ AGENTS.md         This file
 
 ## The two trust tiers
 
-| Operation | Trust | Auth | Transport |
-|-----------|-------|------|-----------|
-| `addCapture` | USER — any authenticated user | Long-lived JWT in Keychain | `?` present → CloudFront logs → 202 |
-| `publish` | OWNER — signature-verified | openssl-signed payload, public key in repo | No `?` → Lambda processes body |
+| Operation    | Trust                         | Auth                                       | Transport                           |
+| ------------ | ----------------------------- | ------------------------------------------ | ----------------------------------- |
+| `addCapture` | USER — any authenticated user | Long-lived JWT in Keychain                 | `?` present → CloudFront logs → 202 |
+| `publish`    | OWNER — signature-verified    | openssl-signed payload, public key in repo | No `?` → Lambda processes body      |
 
 ## The `?` convention
 
@@ -42,10 +42,9 @@ Driven by how AWS logging works: CloudFront logs the URL (path + query string), 
 
 Trust model: JWT present → Lambda spins up to verify it and decide what to do. No JWT → endpoint doesn't exist (404). The `?` is data format only, not a routing signal.
 
-- Query string present (`?`) = data in the URL. CloudFront logs it automatically. Lambda verifies JWT, reads data from the logged URL, acts.
-- No query string = data in the body. Lambda verifies JWT, reads body, saves to S3.
-
-This convention applies across all `/tube/` endpoints on the platform.
+- Query string present (`?`) = data is also in the URL. CloudFront logs it automatically. Lambda verifies JWT, reads data from the logged URL, acts.
+- No query string = data is only in the body. Lambda verifies JWT, reads body, saves to S3.
+- Both can coexist — `?` for metadata CF logs, body for the file.
 
 ## No code here
 

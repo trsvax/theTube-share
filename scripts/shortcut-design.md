@@ -90,6 +90,7 @@ at request time — proves it has the secret NOW, prevents replay.
 ## Token Refresh
 
 When the token expires (default 90 days for phone):
+
 1. On Mac: `bash scripts/mint-token.sh --device iphone --scope capture --days 90`
 2. Edit the Shortcut on Mac, paste new token + secret
 3. Syncs to phone automatically via iCloud
@@ -97,6 +98,7 @@ When the token expires (default 90 days for phone):
 ## Multi-device / Multi-user
 
 Each device/person gets their own token minted on your Mac:
+
 - `--device kid-emma-iphone --scope capture --days 30`
 - `--device ipad-kitchen --scope capture --days 90`
 
