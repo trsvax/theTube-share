@@ -101,7 +101,16 @@ All use the same verification path in Lambda. The difference is where the secret
 
 ## Device identification
 
-The `sub` claim identifies the device: `mac`, `iphone-15`, `kid-emma-iphone`. Lambda logs it. You can revoke by blocklisting a `sub` value, or just let the token expire and don't re-mint.
+The `sub` claim identifies the device: `mac`, `iphone-15`, `kid-emma-iphone`. Lambda logs it.
+
+## Revocation
+
+No server-side revocation. Tokens are valid until `exp`. The model is:
+
+- **Mac** — your device, your Keychain. No revocation needed.
+- **Kids** — short expiry (30 days), capture-only scope. Revoke = don't re-mint when it expires. If a token leaks before expiry, wait it out — 30 days, capture-only, personal site. Acceptable.
+
+There are no public users with minted tokens. Cognito handles web users with its own revocation flow.
 
 ## Multi-user (future)
 
