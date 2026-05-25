@@ -70,11 +70,11 @@ Lambda:  decode JWT → get secret → SHA256(secret + timestamp) → compare
 
 The `?` in the URL decides where data lands:
 
-- `POST /tube/share/add?type=image&file=...` → data in URL, CF logs it; Lambda verifies JWT and records capture
-- `POST /tube/share/upload` (no `?`) → data in body; Lambda verifies JWT and saves to S3
+- `POST /tube/share/add?type=image&file=...` → CF logs URL; Lambda verifies JWT, returns 202
+- `POST /tube/share/upload` (no `?`) → Lambda verifies JWT, saves body to S3
 - Both at once — metadata in `?`, file in body
 
-JWT present → Lambda runs. No JWT → 404.
+No JWT → 404. Use an anonymous JWT for public-style captures.
 
 Same convention as all `/tube/` endpoints. Comments, reactions, bookmarks — all use the same pattern.
 

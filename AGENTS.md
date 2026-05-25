@@ -33,14 +33,16 @@ AGENTS.md         This file
 
 | Operation    | Trust                         | Auth                                       | Transport                           |
 | ------------ | ----------------------------- | ------------------------------------------ | ----------------------------------- |
-| `addCapture` | USER — any authenticated user | Long-lived JWT in Keychain                 | `?` present → CloudFront logs → 202 |
-| `publish`    | OWNER — signature-verified    | openssl-signed payload, public key in repo | No `?` → Lambda processes body      |
+| `addCapture` | USER — any authenticated user | Long-lived JWT in Keychain                 | `?` present → CF logs URL → Lambda verifies JWT → 202 |
+| `publish`    | OWNER — signature-verified    | openssl-signed payload, public key in repo | No `?` → JWT required → Lambda verifies + saves body |
 
 ## The `?` convention
 
 Driven by how AWS logging works: CloudFront logs the URL (path + query string), not the body.
 
-Trust model: JWT present → Lambda spins up to verify it and decide what to do. No JWT → endpoint doesn't exist (404). The `?` is data format only, not a routing signal.
+Trust model: the edge gates on JWT. No JWT → 404 always. JWT present → Lambda runs to verify and decide. Use an anonymous JWT for public/unauthenticated-style captures.
+
+Note: 404s are still in the CF logs — CloudFront logs everything. But a 202 is the signal that a capture was accepted and should be processed. A 404 could be noise, misconfiguration, or an attack probe. The anonymous JWT is how you get a 202 for a capture that isn't tied to a user.
 
 - Query string present (`?`) = data is also in the URL. CloudFront logs it automatically. Lambda verifies JWT, reads data from the logged URL, acts.
 - No query string = data is only in the body. Lambda verifies JWT, reads body, saves to S3.

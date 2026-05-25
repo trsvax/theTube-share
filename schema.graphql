@@ -6,7 +6,7 @@ Two trust tiers:
 - Publish: binary upload to Lambda, signature-verified, stored to S3.
 
 The ? means data is also in the URL, so CF logs it. Body is independent — both can coexist.
-JWT present → Lambda runs (verify, then act). No JWT → 404.
+No JWT → 404. JWT present → Lambda runs (verify, then act). Use anonymous JWT for public captures.
 """
 type Mutation {
   """
@@ -60,7 +60,7 @@ enum ShareType {
   NOTE
 }
 
-"202 Accepted — data is in the log, processing is deferred."
+"202 Noted — data is in the log, processing is deferred."
 type Accepted {
   ok: Boolean!
 }
