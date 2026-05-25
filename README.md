@@ -83,7 +83,7 @@ type: image
 file: IMG_1234.HEIC
 captured: 2026-05-23
 caption: temple gate at sunset
-src: /shares/2026-05-23-abc123.jpg
+src: /shares/K1jaBcDeFgH.jpg
 ```
 
 Placeholder until `src:` is populated. Real image once it lands. Same pattern as `[design]:`.

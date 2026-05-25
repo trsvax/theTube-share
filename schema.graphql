@@ -66,7 +66,7 @@ type Accepted {
 }
 
 type PublishResult {
-  "S3 path to the stored asset, e.g. /shares/2026-05-23-abc123.jpg"
+  "S3 path to the stored asset, e.g. /shares/K1jaBcDeFgH.jpg"
   src: String!
 }
 
