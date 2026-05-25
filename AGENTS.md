@@ -36,12 +36,14 @@ AGENTS.md         This file
 | `addCapture` | USER — any authenticated user | Long-lived JWT in Keychain | `?` present → CloudFront logs → 202 |
 | `publish` | OWNER — signature-verified | openssl-signed payload, public key in repo | No `?` → Lambda processes body |
 
-## The `?` routing convention
+## The `?` convention
 
-- Query string present (`?`) = data is self-contained in the URL. Log and 202. No compute.
-- No query string = body contains data that needs processing. Lambda handles it.
+Driven by how AWS logging works: CloudFront logs the URL (path + query string), not the body.
 
-This is the same convention used across all `/tube/` endpoints on the platform.
+- Query string present (`?`) = data in the URL. CloudFront logs it automatically. 202, fire and forget. Use when data is safe to log and there's no body to save.
+- No query string = body. Lambda saves it to S3 (`s3.putObject` — that's the only compute). Use when data shouldn't be in the logs (PII, sensitive content), or when you have a file to store.
+
+This convention applies across all `/tube/` endpoints on the platform.
 
 ## No code here
 
