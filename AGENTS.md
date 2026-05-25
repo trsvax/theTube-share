@@ -31,10 +31,10 @@ AGENTS.md         This file
 
 ## The two trust tiers
 
-| Operation    | Trust                         | Auth                                       | Transport                           |
-| ------------ | ----------------------------- | ------------------------------------------ | ----------------------------------- |
+| Operation    | Trust                         | Auth                                       | Transport                                             |
+| ------------ | ----------------------------- | ------------------------------------------ | ----------------------------------------------------- |
 | `addCapture` | USER — any authenticated user | Long-lived JWT in Keychain                 | `?` present → CF logs URL → Lambda verifies JWT → 202 |
-| `publish`    | OWNER — signature-verified    | openssl-signed payload, public key in repo | No `?` → JWT required → Lambda verifies + saves body |
+| `publish`    | OWNER — signature-verified    | openssl-signed payload, public key in repo | No `?` → JWT required → Lambda verifies + saves body  |
 
 ## The `?` convention
 
