@@ -16,7 +16,7 @@ Every step uses a native Apple tool. The AI is the connective tissue — it read
 
 | Component | Lines | What it does |
 |-----------|-------|-------------|
-| CF function | ~10 | `/w/*?*` → log and 202 |
+| CF function | ~10 | `/tube/*?*` → log and 202 |
 | Edge-auth update | ~30 | Verify minted JWTs alongside Cognito |
 | `mint-token.sh` | ~60 | Mint tokens for any device (Mac, phone, kids) |
 | `share-request.sh` | ~70 | Capture/publish from Mac |
@@ -28,7 +28,7 @@ Every step uses a native Apple tool. The AI is the connective tissue — it read
 
 The default workflow is capture-first:
 
-**Capture** — out in the world, hit share, tap "Save to Tube." The Shortcut POSTs metadata to `/w/share/add?type=image&file=...`. CloudFront logs it, returns 202. No upload, no compute. The photo stays in iCloud.
+**Capture** — out in the world, hit share, tap "Save to Tube." The Shortcut POSTs metadata to `/tube/share/add?type=image&file=...`. CloudFront logs it, returns 202. No upload, no compute. The photo stays in iCloud.
 
 **Query** — back at the Mac, ask the AI "what did I capture today?" It reads the CloudFront logs, shows you the list. You pick the ones that matter.
 
@@ -70,10 +70,10 @@ Lambda:  decode JWT → get secret → SHA256(secret + timestamp) → compare
 
 The `?` in the URL is the routing signal:
 
-- `POST /w/share/add?type=image&file=...` → logged, 202, no compute
-- `POST /w/share/upload` (no `?`) → Lambda, verified, compute
+- `POST /tube/share/add?type=image&file=...` → logged, 202, no compute
+- `POST /tube/share/upload` (no `?`) → Lambda, verified, compute
 
-Same convention as all `/w/` endpoints. Comments, reactions, bookmarks — all use the same pattern.
+Same convention as all `/tube/` endpoints. Comments, reactions, bookmarks — all use the same pattern.
 
 ## The `[share]:` block
 
@@ -109,7 +109,7 @@ bash scripts/verify-local.sh
 
 ## Roadmap
 
-1. CF function for `/w/*?*` → 202. iOS Shortcut. `[share]:` block renderer.
+1. CF function for `/tube/*?*` → 202. iOS Shortcut. `[share]:` block renderer.
 2. Mac publish script + Lambda. Edge-auth updated for minted JWTs.
 3. Passkeys for browser writes. Native iOS/macOS app.
 4. MCP server (read-only AWS + GitHub, Touch ID on startup). Query captures, trace errors, check infra.

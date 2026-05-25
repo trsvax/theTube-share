@@ -1,7 +1,7 @@
 # Save to Tube — iOS Shortcut Design
 
 Receives a share from any app (Photos, Safari, Notes), extracts metadata,
-POSTs to /w/share/add with a minted token + time-based hash.
+POSTs to /tube/share/add with a minted token + time-based hash.
 
 ## Auth Model
 
@@ -61,7 +61,7 @@ at request time — proves it has the secret NOW, prevents replay.
                       │
 ┌─────────────────────────────────────────────────┐
 │ Text:                                           │
-│ https://thetube.trsvax.com/w/share/add          │
+│ https://thetube.today/tube/share/add            │
 │   ?type=[TYPE]                                  │
 │   &file=[FILE]                                  │
 │   &date=[DATE]                                  │

@@ -41,7 +41,7 @@ AGENTS.md         This file
 - Query string present (`?`) = data is self-contained in the URL. Log and 202. No compute.
 - No query string = body contains data that needs processing. Lambda handles it.
 
-This is the same convention used across all `/w/` endpoints on the platform.
+This is the same convention used across all `/tube/` endpoints on the platform.
 
 ## No code here
 

@@ -10,7 +10,7 @@
 # Requires: openssl, security (macOS Keychain), curl
 set -euo pipefail
 
-ENDPOINT="${SHARE_ENDPOINT:-https://thetube.today/w/share}"
+ENDPOINT="${SHARE_ENDPOINT:-https://thetube.today/tube/share}"
 
 ACTION="${1:-}"; shift || { echo "Usage: share-request.sh [capture|publish] ..."; exit 1; }
 

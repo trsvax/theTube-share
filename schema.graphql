@@ -13,7 +13,7 @@ type Mutation {
   Log a capture intent. No upload, no compute. The query string IS the data.
   CloudFront logs it and returns 202. The photo stays on the device.
 
-  POST /w/share/add?type=image&file=IMG_1234.HEIC&date=2026-05-23&caption=temple+gate
+  POST /tube/share/add?type=image&file=IMG_1234.HEIC&date=2026-05-23&caption=temple+gate
   """
   addCapture(
     "Media type: image, link, note"
@@ -30,7 +30,7 @@ type Mutation {
   Upload a finished asset. Binary body, signature-verified.
   Lambda stores to S3, returns the path. The [share]: block gets its src:.
 
-  POST /w/share/upload
+  POST /tube/share/upload
   Headers: Content-Type, X-Share-Meta, X-Signature
   Body: binary file
   """
