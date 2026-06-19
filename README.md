@@ -17,18 +17,18 @@ Every step uses a native Apple tool. The AI is the connective tissue — it read
 | Component                 | Lines       | What it does                                  |
 | ------------------------- | ----------- | --------------------------------------------- |
 | CF function               | ~10         | `/tube/*?*` → log and 202                     |
-| Edge-auth update          | ~30         | Verify minted JWTs alongside Cognito          |
-| `mint-token.sh`           | ~60         | Mint tokens for any device (Mac, phone, kids) |
-| `share-request.sh`        | ~70         | Capture/publish from Mac                      |
-| iOS Shortcut              | ~10 actions | Capture from phone share sheet                |
+| Registration endpoint     | ~40         | Register device public key to S3              |
+| `register-device.sh`      | ~50         | Generate key pair, register with server       |
+| `share-request.sh`        | ~70         | Capture/publish from Mac (signs with P-256)   |
+| iOS app                   | native      | Capture/publish with Secure Enclave signing   |
 | `[share]:` block renderer | ~40         | Render captures in posts                      |
-| Lambda (publish)          | ~50         | Verify + store to S3                          |
+| Lambda (publish)          | ~50         | Verify signature + store to S3                |
 
 ## The flow
 
 The default workflow is capture-first:
 
-**Capture** — out in the world, hit share, tap "Save to Tube." The Shortcut POSTs metadata to `/tube/share/add?type=image&file=...`. CloudFront logs it, returns 202. No upload, no Lambda. The photo stays in iCloud.
+**Capture** — out in the world, hit share, tap "Save to Tube." The iOS app signs and POSTs metadata to `/tube/share/add?type=image&file=...`. CloudFront logs it, returns 202. No upload, no Lambda. The photo stays in iCloud.
 
 **Query** — back at the Mac, ask the AI "what did I capture today?" It reads the CloudFront logs, shows you the list. You pick the ones that matter.
 
@@ -52,29 +52,29 @@ The system doesn't enforce a single workflow. It just provides the primitives: c
 
 ## Auth model
 
-One model for all devices. Minted JWTs with embedded secrets and time-based hashes. See [crypto.md](./crypto.md) for the full design.
+Public key signatures. Each device generates a P-256 key pair — private key stays in the Secure Enclave (iOS) or Keychain (Mac), never leaves the device. Public key registered on the server once. See [crypto.md](./crypto.md) for the full design.
 
 ```
-Device:  SHA256(secret + timestamp) → X-Pass header
-Lambda:  decode JWT → get secret → SHA256(secret + timestamp) → compare
+Device:  Sign(private_key, method + path + timestamp + body_hash) → X-Signature header
+Lambda:  fetch public key from registry → verify signature
 ```
 
-| Client       | Secret stored in       | Scope                    |
-| ------------ | ---------------------- | ------------------------ |
-| Mac          | Keychain + Touch ID    | publish                  |
-| Phone        | Shortcut text field    | capture                  |
-| Kids         | Shortcut, short expiry | capture                  |
-| Web (future) | Cognito + hashme       | capture/publish by group |
+| Client | Key storage                    | Scope   |
+| ------ | ------------------------------ | ------- |
+| iOS    | Secure Enclave + Face ID       | publish |
+| Mac    | Keychain + Touch ID            | publish |
+
+No shared secrets. No tokens. No minting ceremony. Native app required.
 
 ## Transport
 
 The `?` in the URL decides where data lands:
 
-- `POST /tube/share/add?type=image&file=...` → CF logs URL; Lambda verifies JWT, returns 202
-- `POST /tube/share/upload` (no `?`) → Lambda verifies JWT, saves body to S3
+- `POST /tube/share/add?type=image&file=...` → CF logs URL; Lambda verifies signature, returns 202
+- `POST /tube/share/upload` (no `?`) → Lambda verifies signature, saves body to S3
 - Both at once — metadata in `?`, file in body
 
-No JWT → 404. Use an anonymous JWT for public-style captures.
+No signature → 403. All requests must be signed by a registered device.
 
 Same convention as all `/tube/` endpoints. Comments, reactions, bookmarks — all use the same pattern.
 
@@ -94,11 +94,8 @@ Placeholder until `src:` is populated. Real image once it lands. Same pattern as
 ## Scripts
 
 ```bash
-# Mint a token for your Mac (Touch ID, stored in Keychain)
-bash scripts/mint-token.sh --device mac --scope publish --days 365
-
-# Mint one for the phone (paste into Shortcut)
-bash scripts/mint-token.sh --device iphone --scope capture --days 90
+# Register a new device (Mac bootstraps first, then registers others)
+bash scripts/register-device.sh --device iphone-15 --scope publish
 
 # Capture from Mac
 bash scripts/share-request.sh capture --type image --file IMG_1234.HEIC --date 2026-05-23
@@ -106,15 +103,18 @@ bash scripts/share-request.sh capture --type image --file IMG_1234.HEIC --date 2
 # Publish from Mac
 bash scripts/share-request.sh publish --type image --file IMG_1234.HEIC --date 2026-05-23 --path ~/edited.jpg
 
+# Revoke a device
+bash scripts/revoke-device.sh --device kid-emma-iphone
+
 # Test the auth chain locally
 bash scripts/verify-local.sh
 ```
 
 ## Roadmap
 
-1. CF function for `/tube/*?*` → 202. iOS Shortcut. `[share]:` block renderer.
-2. Mac publish script + Lambda. Edge-auth updated for minted JWTs.
-3. Passkeys for browser writes. Native iOS/macOS app.
+1. Device registration endpoint. P-256 key generation in iOS app.
+2. Mac publish script + Lambda signature verification.
+3. iOS native app — capture + publish with Secure Enclave signing.
 4. MCP server (read-only AWS + GitHub, Touch ID on startup). Query captures, trace errors, check infra.
 
 ## Related

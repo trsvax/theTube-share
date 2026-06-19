@@ -6,7 +6,9 @@ Two trust tiers:
 - Publish: binary upload to Lambda, signature-verified, stored to S3.
 
 The ? means data is also in the URL, so CF logs it. Body is independent — both can coexist.
-No JWT → 404. JWT present → Lambda runs (verify, then act). Use anonymous JWT for public captures.
+
+Auth: P-256 signatures. Device signs request with Secure Enclave private key.
+Server verifies against registered public key. No shared secrets. No tokens.
 """
 type Mutation {
   """
@@ -14,6 +16,7 @@ type Mutation {
   CloudFront logs it and returns 202. The photo stays on the device.
 
   POST /tube/share/add?type=image&file=IMG_1234.HEIC&date=2026-05-23&caption=temple+gate
+  Headers: X-Device-Id, X-Timestamp, X-Signature
   """
   addCapture(
     "Media type: image, link, note"
@@ -24,14 +27,14 @@ type Mutation {
     date: String!
     "What you thought at capture time"
     caption: String
-  ): Accepted @moderate @auth(role: USER)
+  ): Accepted @moderate @auth(scope: CAPTURE)
 
   """
   Upload a finished asset. Binary body, signature-verified.
   Lambda stores to S3, returns the path. The [share]: block gets its src:.
 
   POST /tube/share/upload
-  Headers: Content-Type, X-Share-Meta, X-Signature
+  Headers: Content-Type, X-Share-Meta, X-Device-Id, X-Timestamp, X-Signature
   Body: binary file
   """
   publish(
@@ -41,7 +44,7 @@ type Mutation {
     file: String!
     "Capture date this asset belongs to"
     date: String!
-  ): PublishResult @realtime @auth(role: OWNER)
+  ): PublishResult @realtime @auth(scope: PUBLISH)
 }
 
 type Query {
@@ -94,13 +97,13 @@ Returns a result synchronously.
 directive @realtime on FIELD_DEFINITION
 
 """
-JWT required with specified role.
-USER = any authenticated user (field capture).
-OWNER = signature-verified owner (publish).
+Signature-verified with registered device key.
+Scope is stored server-side in the device registry — the device
+doesn't declare its own scope, the server checks it.
 """
-directive @auth(role: AuthRole!) on FIELD_DEFINITION
+directive @auth(scope: AuthScope!) on FIELD_DEFINITION
 
-enum AuthRole {
-  USER
-  OWNER
+enum AuthScope {
+  CAPTURE
+  PUBLISH
 }
