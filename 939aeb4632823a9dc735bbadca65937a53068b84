@@ -1,0 +1,1 @@
+Auth model rewritten: P-256 device signatures replace JWT+shared-secret+JWE. No tokens, no minting, no expiry. Revocation is deleting a file from S3. Native app required (no more Shortcuts).
